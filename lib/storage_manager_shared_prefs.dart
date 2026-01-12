@@ -5,14 +5,15 @@ class StorageManagerSharedPrefs extends StorageManager {
   static const _keyPrefix = "aptabase_";
 
   final _events = <String, String>{};
+  late final SharedPreferences _prefs;
 
   @override
   Future<void> init() async {
-    final sharedPrefs = await SharedPreferences.getInstance();
-    final keys = sharedPrefs.getKeys();
+    _prefs = await SharedPreferences.getInstance();
+    final keys = _prefs.getKeys();
     for (final key in keys) {
       if (key.startsWith(_keyPrefix)) {
-        final value = sharedPrefs.getString(key);
+        final value = _prefs.getString(key);
         if (value != null) {
           final unprefixedKey = key.substring(_keyPrefix.length);
           _events[unprefixedKey] = value;
@@ -26,8 +27,7 @@ class StorageManagerSharedPrefs extends StorageManager {
   @override
   Future<void> addEvent(String key, String event) async {
     try {
-      final sharedPrefs = await SharedPreferences.getInstance();
-      final success = await sharedPrefs.setString("$_keyPrefix$key", event);
+      final success = await _prefs.setString("$_keyPrefix$key", event);
 
       if (success) {
         _events[key] = event;
@@ -44,9 +44,8 @@ class StorageManagerSharedPrefs extends StorageManager {
     _events.removeWhere((k, _) => keys.contains(k));
 
     try {
-      final sharedPrefs = await SharedPreferences.getInstance();
       for (final key in keys) {
-        await sharedPrefs.remove("$_keyPrefix$key");
+        await _prefs.remove("$_keyPrefix$key");
       }
     } catch (e) {
       // Events were already sent successfully and removed from memory.
