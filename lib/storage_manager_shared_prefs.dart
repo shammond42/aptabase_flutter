@@ -2,6 +2,8 @@ import "package:aptabase_flutter/storage_manager.dart";
 import "package:shared_preferences/shared_preferences.dart";
 
 class StorageManagerSharedPrefs extends StorageManager {
+  static const _keyPrefix = "aptabase_";
+
   final _events = <String, String>{};
 
   @override
@@ -9,8 +11,13 @@ class StorageManagerSharedPrefs extends StorageManager {
     final sharedPrefs = await SharedPreferences.getInstance();
     final keys = sharedPrefs.getKeys();
     for (final key in keys) {
-      final value = sharedPrefs.getString(key);
-      if (value != null) _events[key] = value;
+      if (key.startsWith(_keyPrefix)) {
+        final value = sharedPrefs.getString(key);
+        if (value != null) {
+          final unprefixedKey = key.substring(_keyPrefix.length);
+          _events[unprefixedKey] = value;
+        }
+      }
     }
 
     return super.init();
@@ -21,7 +28,7 @@ class StorageManagerSharedPrefs extends StorageManager {
     _events[key] = event;
 
     final sharedPrefs = await SharedPreferences.getInstance();
-    await sharedPrefs.setString(key, event);
+    await sharedPrefs.setString("$_keyPrefix$key", event);
   }
 
   @override
@@ -30,7 +37,7 @@ class StorageManagerSharedPrefs extends StorageManager {
 
     final sharedPrefs = await SharedPreferences.getInstance();
     for (final key in keys) {
-      await sharedPrefs.remove(key);
+      await sharedPrefs.remove("$_keyPrefix$key");
     }
   }
 
